@@ -161,6 +161,12 @@ package com.swfwire.decompiler
 		public function readBytes(byteArray:ByteArray, offset:uint = 0, length:uint = 0):void
 		{
 			alignBytes();
+			
+			//检测是否超帧
+			if((length + offset)> byteArray.length){
+				length = byteArray.length - offset;
+			}
+			
 			bytes.readBytes(byteArray, offset, length);
 		}
 		/**

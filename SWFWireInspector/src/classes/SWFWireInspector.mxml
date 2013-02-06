@@ -37,6 +37,7 @@
 			import com.swfwire.decompiler.data.swf3.tags.DefineShape3Tag;
 			import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
 			import com.swfwire.decompiler.data.swf8.tags.DefineShape4Tag;
+			import com.swfwire.decompiler.data.swf9.tags.DefineBinaryDataTag;
 			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 			import com.swfwire.decompiler.utils.ABCToActionScript;
@@ -790,6 +791,41 @@
 					}
 				}
 			}
+			
+			private function onActionHandler(key:String,data:Object):void{
+				
+				if(currentState != 'loaded')return;
+					
+				switch(key){
+					
+					case "SaveByte":
+						
+						var tagData:DefineBinaryDataTag = lastResult.swf.tags[data.id] as DefineBinaryDataTag;
+						if(tagData == null)return;
+						
+						var start:uint;
+						var length:uint;
+						if(data.id == -1)
+						{
+							start = 0;
+							length = lastResult.tagMetadata[0].start;
+						}
+						else
+						{
+							var metadata:Object = lastResult.tagMetadata[data.id];
+							start = metadata.start;
+							length = metadata.length;
+						}
+						
+						//这个资源的数据
+						var outData:ByteArray = new ByteArray();
+						outData.writeBytes(lastSource,start,length);
+						
+						var file:File = new File();
+						file.save(outData,data.dat);
+						break;
+				}
+			}
 
 			private function updateClasses():void
 			{
@@ -952,7 +988,7 @@
 			</mx:Canvas>
 		</mx:HDividedBox>
 		<ui:SWFPanel id="detailsPanel" width="100%" height="100%"
-					 currentStateChange="updateBottomPanel()"/>
+					 currentStateChange="updateBottomPanel()" onActon="onActionHandler"/>
 		<mx:TextArea id="logPanel" width="100%" height="100%" editable="false"/>
 		<mx:ProgressBar id="loadProgress" width="100%" height="20" label="Loading SWF: %3%%"
 						labelPlacement="center" maximum="1" minimum="0" mode="manual"/>

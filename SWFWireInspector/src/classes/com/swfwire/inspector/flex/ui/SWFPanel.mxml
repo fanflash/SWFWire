@@ -33,6 +33,9 @@
 		<![CDATA[
 			import com.swfwire.utils.ArrayUtil;
 			
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import mx.events.FlexEvent;
+			
 			[Bindable]
 			public var isABC:Boolean = true;
 			[Bindable]
@@ -41,6 +44,11 @@
 			public var classesCount:uint;
 			[Bindable]
 			public var methodsCount:uint;
+			
+			//实现各种动作
+			//onActon(key:String, data:object);
+			[Bindable]
+			public var onActon:Function;
 			
 			public function sortOnSize(a:*, b:*):int
 			{
@@ -61,11 +69,77 @@
 				}
 				return nA - nB;
 			}
+			
+			protected var curSelectItem:DataGridItemRenderer;
+			protected function tagList_contextMenuHandler(event:MouseEvent):void
+			{
+				var menu:NativeMenu = this.tagList.contextMenu;
+				menu.removeAllItems();
+				
+				var selectItem:DataGridItemRenderer = event.target as DataGridItemRenderer;
+				this.curSelectItem = selectItem;
+				if(selectItem == null)return;
+				
+				var data:Object = selectItem.data;
+				if(data == null)return;
+				
+				switch(data.name){
+					case "DefineBinaryDataTag":
+						this.autoAddMenuItem("SaveByte");
+						break;
+				}
+				
+			}
+			
+			
+			
+			protected var menuItemMap:Dictionary;
+			protected function tagList_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.tagList.contextMenu = new NativeMenu();
+				this.menuItemMap = new Dictionary();
+				var local:SWFPanel = this;
+				
+				//增加保存数据功能
+				this.makeMenuItem("SaveByte","Save Binary");
+			}
+			
+			
+			
+			private function makeMenuItem(key:String, name:String):void
+			{
+				if(this.menuItemMap[key])return;
+				
+				var item:NativeMenuItem = new NativeMenuItem(name);
+				item.data = key;
+				item.addEventListener(Event.SELECT, this.menuItemSelectHandler);
+				this.menuItemMap[key] = item
+			}
+			
+			
+			private function menuItemSelectHandler(e:Event):void{
+				
+				var item:NativeMenuItem = e.currentTarget as NativeMenuItem
+				var selectItem:DataGridItemRenderer = this.curSelectItem;
+				if(selectItem == null)return;
+				
+				if(this.onActon is Function) this.onActon(item.data,selectItem.data);
+			}
+			
+			
+			private function autoAddMenuItem(key:String):Boolean{
+				
+				var menuItem:NativeMenuItem = this.menuItemMap[key] as NativeMenuItem;
+				if(menuItem == null)return false;
+				
+				this.tagList.contextMenu.addItem(menuItem);
+				return true;
+			}
 		]]>
 	</mx:Script>
 	<mx:HDividedBox width="100%" height="100%">
 		<mx:VBox width="300" height="100%">
-			<mx:DataGrid id="tagList" width="100%" height="100%">
+			<mx:DataGrid id="tagList" width="100%" height="100%" contextMenu="tagList_contextMenuHandler(event)" creationComplete="tagList_creationCompleteHandler(event)">
 				<mx:columns>
 					<mx:DataGridColumn headerText="ID" dataField="displayId" sortCompareFunction="{ArrayUtil.getSortNumeric('id')}" width="34"/>
 					<mx:DataGridColumn headerText="Type" dataField="name"/>
