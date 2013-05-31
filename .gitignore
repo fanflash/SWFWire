@@ -4,3 +4,5 @@ bin-debug/
 html-template/
 library.swf
 catalog.xml
+/SWFWireInspector/bin-release-temp
+/SWFWireInspector/workerswfs
